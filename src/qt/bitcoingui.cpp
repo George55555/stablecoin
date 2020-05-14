@@ -26,6 +26,7 @@
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
 #include "notificator.h"
+#include "coincontrolpage.h"
 #include "guiutil.h"
 #include "rpcconsole.h"
 
@@ -54,6 +55,7 @@
 #include <QFileDialog>
 #include <QDesktopServices>
 #include <QTimer>
+#include <QTableWidget>
 #include <QDragEnterEvent>
 #include <QUrl>
 
@@ -111,6 +113,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     sendCoinsPage = new SendCoinsDialog(this);
 
+    coinControlPage = new CoinControlPage(this);
+    coinControlPage->setFont(GUIUtil::bitcoinAddressFont());
     signVerifyMessageDialog = new SignVerifyMessageDialog(this);
 
     centralWidget = new QStackedWidget(this);
@@ -120,6 +124,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(addressBookPage);
     centralWidget->addWidget(receiveCoinsPage);
     centralWidget->addWidget(sendCoinsPage);
+    centralWidget->addWidget(coinControlPage);
 #ifdef FIRST_CLASS_MESSAGING
     centralWidget->addWidget(signVerifyMessageDialog);
 #endif
@@ -228,6 +233,12 @@ void BitcoinGUI::createActions()
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
     tabGroup->addAction(sendCoinsAction);
+    
+    coinControlAction = new QAction(QIcon(":/icons/history"), tr("&Coin Control"), this);
+    coinControlAction->setToolTip(tr("See address linkages"));
+    coinControlAction->setCheckable(true);
+    coinControlAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    tabGroup->addAction(coinControlAction);
 
     signMessageAction = new QAction(QIcon(":/icons/edit"), tr("Sign &message..."), this);
     signMessageAction->setToolTip(tr("Sign a message to prove you own a StableCoin address"));
@@ -259,6 +270,7 @@ void BitcoinGUI::createActions()
     connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
     connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
+    connect(coinControlAction, SIGNAL(triggered()), this, SLOT(gotoCoinControlPage()));
 #ifdef FIRST_CLASS_MESSAGING
     connect(firstClassMessagingAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     // Always start with the sign message tab for FIRST_CLASS_MESSAGING
@@ -349,6 +361,7 @@ void BitcoinGUI::createToolBars()
 #ifdef FIRST_CLASS_MESSAGING
     toolbar->addAction(firstClassMessagingAction);
 #endif
+    toolbar->addAction(coinControlAction);
 
     QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
     toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -426,7 +439,15 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
 
         // Ask for passphrase if needed
         connect(walletModel, SIGNAL(requireUnlock()), this, SLOT(unlockWallet()));
+        
+        connect(walletModel->getOptionsModel(), SIGNAL(coinControlFeaturesChanged(bool)), this, SLOT(toggleCoinControlTab(bool)));
+        toggleCoinControlTab(walletModel->getOptionsModel()->getCoinControlFeatures());
     }
+}
+
+void BitcoinGUI::toggleCoinControlTab(bool show)
+{
+    coinControlAction->setVisible(show);
 }
 
 void BitcoinGUI::createTrayIcon()
@@ -775,8 +796,27 @@ void BitcoinGUI::gotoReceiveCoinsPage()
 
 void BitcoinGUI::gotoSendCoinsPage()
 {
+    if (!coinControlPage->selectedAddresses().empty())
+    {
+        sendCoinsPage->setSendFromAddress(coinControlPage->selectedAddresses());
+        coinControlPage->clearSelection();
+    }
+
+    show();  // TODOcoderrr: still need this?
+
     sendCoinsAction->setChecked(true);
     centralWidget->setCurrentWidget(sendCoinsPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
+void BitcoinGUI::gotoCoinControlPage()
+{
+    show();
+    coinControlAction->setChecked(true);
+    centralWidget->setCurrentWidget(coinControlPage);
+    coinControlPage->UpdateTable();
 
     exportAction->setEnabled(false);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
