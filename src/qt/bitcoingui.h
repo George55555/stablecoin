@@ -13,6 +13,7 @@ class MiningPage;
 class AddressBookPage;
 class SendCoinsDialog;
 class SignVerifyMessageDialog;
+class CoinControlPage;
 class Notificator;
 class RPCConsole;
 
@@ -67,6 +68,7 @@ private:
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     SignVerifyMessageDialog *signVerifyMessageDialog;
+    CoinControlPage *coinControlPage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -95,6 +97,7 @@ private:
     QAction *changePassphraseAction;
     QAction *aboutQtAction;
     QAction *openRPCConsoleAction;
+    QAction *coinControlAction;
 
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
@@ -113,6 +116,9 @@ private:
     void createTrayIcon();
 
 public slots:
+    /** Switch to send coins page */
+    void gotoSendCoinsPage();
+
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
     /** Set number of blocks shown in the UI */
@@ -149,8 +155,8 @@ private slots:
     void gotoAddressBookPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
-    /** Switch to send coins page */
-    void gotoSendCoinsPage();
+    /** Switch to coin control page */
+    void gotoCoinControlPage();
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -181,6 +187,7 @@ private slots:
 
     /** Show window if hidden, unminimize when minimized, rise when obscured or show if hidden and fToggleHidden is true */
     void showNormalIfMinimized(bool fToggleHidden = false);
+    void toggleCoinControlTab(bool);
     /** simply calls showNormalIfMinimized(true) for use in SLOT() macro */
     void toggleHidden();
 };
