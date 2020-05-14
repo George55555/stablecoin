@@ -28,6 +28,7 @@ public:
         Fee,               // qint64
         DisplayUnit,       // BitcoinUnits::Unit
         DisplayAddresses,  // bool
+        CoinControlFeatures, // bool
         DetachDatabases,   // bool
         Language,          // QString
         OptionIDRowCount,
@@ -55,10 +56,12 @@ private:
     bool bDisplayAddresses;
     bool fMinimizeToTray;
     bool fMinimizeOnClose;
+    bool bCoinControlFeatures;
     QString language;
 
 signals:
     void displayUnitChanged(int unit);
+    void coinControlFeaturesChanged(bool);
 };
 
 #endif // OPTIONSMODEL_H
